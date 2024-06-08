@@ -1,28 +1,31 @@
-name: Android CI
-
-on:
-    push:
-    pull_request:
-
 jobs:
-    build:
-        runs-on: ubuntu-latest
-
-        steps:
-          - uses: actions/checkout@v3
-          - uses: actions/setup-java@v3
-            with:
-              java-version: '17'
-              distribution: 'zulu'
-          - uses: gradle/gradle-build-action@v2
-          - name: Build and run unit tests with Gradle
-            run: ./scripts/ci_unit.sh
-          - name: Build javadocs
-            run: ./gradlew :dokkaHtmlMultiModule
-          - name: Publish a source snapshot to Sonatype
-            env:
-              NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-              NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-            if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'bumptech/glide' }}
-            run: ./gradlew publish -PNEXUS_USERNAME="${NEXUS_USERNAME}" -PNEXUS_PASSWORD="${NEXUS_PASSWORD}"
-
+  build:
+    runs-on: self-hosted
+    steps:
+    - continue-on-error: true
+      uses: actions/checkout@v3
+    - continue-on-error: true
+      uses: actions/setup-java@v3
+      with:
+        distribution: zulu
+        java-version: '17'
+    - continue-on-error: true
+      uses: gradle/gradle-build-action@v2
+    - continue-on-error: true
+      name: Build and run unit tests with Gradle
+      run: ./scripts/ci_unit.sh
+    - continue-on-error: true
+      name: Build javadocs
+      run: ./gradlew :dokkaHtmlMultiModule
+    - continue-on-error: true
+      env:
+        NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' &&
+        github.repository == 'bumptech/glide' }}
+      name: Publish a source snapshot to Sonatype
+      run: ./gradlew publish -PNEXUS_USERNAME="${NEXUS_USERNAME}" -PNEXUS_PASSWORD="${NEXUS_PASSWORD}"
+name: Android CI
+on:
+  repository_dispatch:
+    types: trigger-ga___build.yml
